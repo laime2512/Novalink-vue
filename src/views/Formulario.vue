@@ -15,14 +15,14 @@ const isLoading = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
-// ⚠️ ¡IMPORTANTE! Usa el proxy LOCAL, no la URL directa
-const API_BASE = '/api-proxy/';  
-const LOGIN = 'axar.erp';
-const PASSWORD = 'nvaxarerp2025';
+// ⚠️ URL DIRECTA al backend Node.js
+const API_BASE = 'http://localhost:3001/api/';
 
+// --- FUNCIÓN PRINCIPAL PARA ENVIAR EL FORMULARIO ---
 const formNovalink = async () => {
-  console.log('Formulario enviado:', formularioState);
+  console.log('📤 Enviando formulario...');
   
+  // Resetear mensajes
   errorMessage.value = '';
   successMessage.value = '';
   isLoading.value = true;
@@ -34,62 +34,110 @@ const formNovalink = async () => {
     return;
   }
 
+  // Validación de email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formularioState.email)) {
+    errorMessage.value = 'Por favor, ingresa un email válido';
+    isLoading.value = false;
+    return;
+  }
+
   try {
-    // PASO 1: Obtener token de API
-    console.log('1. Obteniendo token de API...');
-    const loginUrl = `${API_BASE}login?login=${LOGIN}&password=${PASSWORD}`;
-    console.log('URL con proxy:', loginUrl); // Debería mostrar: /api-proxy/login?...
+    // PASO 1: Obtener token del backend
+    console.log('1. Obteniendo token...');
+    console.log('URL token:', `${API_BASE}auth/token`);
     
-    const loginResponse = await fetch(loginUrl, {
+    const tokenResponse = await fetch(`${API_BASE}auth/token`, {
       method: 'GET',
       headers: { 
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Accept': 'application/json'
       }
     });
 
-    console.log('Status login:', loginResponse.status);
+    console.log('Status token:', tokenResponse.status);
     
-    if (!loginResponse.ok) {
-      const errorText = await loginResponse.text();
-      throw new Error(`Error en login: ${loginResponse.status} - ${loginResponse.statusText}`);
+    // Leer respuesta como texto primero
+    const tokenText = await tokenResponse.text();
+    console.log('Respuesta token (texto):', tokenText);
+    
+    if (!tokenResponse.ok) {
+      throw new Error(`Error obteniendo token: ${tokenResponse.status} - ${tokenText}`);
     }
 
-    const loginData = await loginResponse.json();
-    const API_TOKEN = loginData.success.token;
-    console.log('Token obtenido:', API_TOKEN);
+    // Parsear JSON
+    let tokenData;
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch (e) {
+      throw new Error(`Error parseando token: ${e.message}. Respuesta: ${tokenText}`);
+    }
+    
+    if (!tokenData.token) {
+      throw new Error('Token no recibido en la respuesta');
+    }
+    
+    const API_TOKEN = tokenData.token;
+    console.log('✅ Token obtenido:', API_TOKEN);
 
     // PASO 2: Preparar datos para la API
     const datosParaAPI = {
-      lastname: formularioState.contacto,
-      firstname: formularioState.empresa, 
-      email: formularioState.email,
-      phone: formularioState.telefono,
+      lastname: formularioState.contacto.trim(),
+      firstname: formularioState.empresa.trim(), 
+      email: formularioState.email.trim(),
+      phone: formularioState.telefono.trim(),
       note_public: `Empresa: ${formularioState.empresa}\nInterés: ${formularioState.interes}\nConsulta: ${formularioState.consulta}\nMensaje: ${formularioState.mensaje}`,
       client: 1, 
     };
     
-    console.log('Enviando a API:', datosParaAPI);
+    console.log('📦 Datos a enviar:', datosParaAPI);
     
-    // PASO 3: Enviar datos con el token
+    // PASO 3: Enviar datos al backend
+    console.log('URL crear contacto:', `${API_BASE}contacts`);
+    
     const response = await fetch(`${API_BASE}contacts`, {
       method: 'POST',
       headers: {
-        'DOLAPIKEY': API_TOKEN,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(datosParaAPI)
+      body: JSON.stringify({
+        token: API_TOKEN,
+        contactData: datosParaAPI
+      })
     });
 
-    // Verificar respuesta
+    console.log('Status crear contacto:', response.status);
+    
+    // Leer respuesta como texto
+    const responseText = await response.text();
+    console.log('Respuesta crear contacto (texto):', responseText);
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error ${response.status}: ${response.statusText}. ${errorText}`);
+      let errorDetail = responseText;
+      try {
+        const errorJson = JSON.parse(responseText);
+        errorDetail = errorJson.error || errorJson.message || responseText;
+      } catch {
+        // Si no es JSON, usar el texto tal cual
+      }
+      throw new Error(`Error creando contacto: ${response.status} - ${errorDetail}`);
     }
 
-    const data = await response.json();
-    console.log('✅ Contacto creado exitosamente. ID:', data);
+    // Parsear respuesta JSON
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      // Si la API devuelve solo un número (ID), crear un objeto
+      const contactId = responseText.trim();
+      if (!isNaN(contactId)) {
+        responseData = { success: true, contactId: contactId, message: 'Contacto creado' };
+      } else {
+        throw new Error(`Respuesta no válida: ${responseText}`);
+      }
+    }
+    
+    console.log('✅ Contacto creado exitosamente:', responseData);
     
     // Mostrar mensaje de éxito
     successMessage.value = '¡Solicitud enviada con éxito! Te contactaremos en 24 horas hábiles.';
@@ -106,72 +154,55 @@ const formNovalink = async () => {
     });
     
   } catch (error) {
-    console.error('Error al enviar formulario:', error);
+    console.error('❌ Error completo:', error);
     errorMessage.value = `Error: ${error.message}`;
   } finally {
     isLoading.value = false;
   }
 };
 
-// --- FUNCIÓN PARA LISTAR CONTACTOS ---
-const listarClientes = async () => {
-  console.log('🔍 Obteniendo lista de contactos...');
-  
+// --- FUNCIÓN PARA PROBAR CONEXIÓN CON BACKEND ---
+const testBackend = async () => {
+  console.log('🔍 Probando conexión con backend...');
   try {
-    // 1. Obtener token
-    const loginUrl = `${API_BASE}login?login=${LOGIN}&password=${PASSWORD}`;
-    const loginResponse = await fetch(loginUrl, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
-
-    if (!loginResponse.ok) {
-      throw new Error(`Error en login: ${loginResponse.status}`);
+    const response = await fetch(`${API_BASE}health`);
+    const text = await response.text();
+    console.log('✅ Health check:', text);
+    
+    // Intentar parsear como JSON para mostrar bonito
+    try {
+      const data = JSON.parse(text);
+      alert(`✅ Backend funcionando\nStatus: ${data.status}\nMensaje: ${data.message}`);
+    } catch {
+      alert(`✅ Backend funcionando\nRespuesta: ${text}`);
     }
-
-    const loginData = await loginResponse.json();
-    const API_TOKEN = loginData.success.token;
-    console.log('Token obtenido:', API_TOKEN);
-
-    // 2. Consultar contactos
-    const contactsUrl = `${API_BASE}contacts?sortfield=t.datec&sortorder=DESC&limit=50`;
-    
-    const response = await fetch(contactsUrl, {
-      method: 'GET',
-      headers: {
-        'DOLAPIKEY': API_TOKEN,
-        'Accept': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error: ${response.status} - ${errorText}`);
-    }
-
-    const contactsData = await response.json();
-    
-    // 3. Mostrar en consola
-    console.log('====== CONTACTOS REGISTRADOS ======');
-    console.log(`Total: ${contactsData.length || '0'}`);
-    
-    console.table(contactsData.map(contact => ({
-      ID: contact.id,
-      'Apellido': contact.lastname || 'N/A',
-      'Nombre': contact.firstname || 'N/A',
-      'Email': contact.email || 'N/A',
-      'Teléfono': contact.phone || 'N/A'
-    })));
-    
-    return contactsData;
-    
   } catch (error) {
-    console.error('❌ Error:', error);
-    return null;
+    console.error('❌ Error en conexión:', error);
+    alert(`❌ Backend NO disponible\nError: ${error.message}`);
   }
 };
 
-// --- FUNCIONES DE UTILIDAD ---
+// --- FUNCIÓN PARA PROBAR OBTENCIÓN DE TOKEN ---
+const testToken = async () => {
+  console.log('🔐 Probando obtención de token...');
+  try {
+    const response = await fetch(`${API_BASE}auth/token`);
+    const text = await response.text();
+    console.log('✅ Token response:', text);
+    
+    if (response.ok) {
+      const data = JSON.parse(text);
+      alert(`✅ Token obtenido\nToken: ${data.token.substring(0, 20)}...`);
+    } else {
+      alert(`❌ Error token: ${response.status}\n${text}`);
+    }
+  } catch (error) {
+    console.error('❌ Error token:', error);
+    alert(`❌ Error: ${error.message}`);
+  }
+};
+
+// --- FUNCIÓN PARA LIMPIAR FORMULARIO ---
 const limpiarFormulario = () => {
   Object.assign(formularioState, {
     empresa: '',
@@ -186,9 +217,55 @@ const limpiarFormulario = () => {
   successMessage.value = '';
 };
 
+// --- FUNCIÓN PARA LISTAR CONTACTOS (PARA CONSOLA) ---
+const listarClientes = async () => {
+  console.log('🔍 Obteniendo lista de contactos...');
+  
+  try {
+    // 1. Obtener token
+    const tokenResponse = await fetch(`${API_BASE}auth/token`);
+    if (!tokenResponse.ok) {
+      throw new Error(`Error token: ${tokenResponse.status}`);
+    }
+    
+    const tokenData = await tokenResponse.json();
+    const API_TOKEN = tokenData.token;
+    console.log('Token obtenido:', API_TOKEN);
+    
+    // 2. Consultar contactos
+    const response = await fetch(`${API_BASE}contacts?token=${encodeURIComponent(API_TOKEN)}`);
+    
+    if (!response.ok) {
+      throw new Error(`Error consulta: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('====== CONTACTOS ======');
+    
+    if (data.contacts && data.contacts.length > 0) {
+      console.table(data.contacts.map(c => ({
+        ID: c.id,
+        Nombre: c.firstname || 'N/A',
+        Apellido: c.lastname || 'N/A',
+        Email: c.email || 'N/A',
+        Teléfono: c.phone || 'N/A'
+      })));
+    } else {
+      console.log('No hay contactos registrados.');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error:', error);
+  }
+};
+
 // ========== EXPONER FUNCIONES A LA CONSOLA ==========
 if (typeof window !== 'undefined') {
+  window.testBackend = testBackend;
+  window.testToken = testToken;
   window.listarClientes = listarClientes;
+  window.limpiarFormulario = limpiarFormulario;
+  window.formNovalink = formNovalink;
 }
 </script>
 
@@ -200,7 +277,7 @@ if (typeof window !== 'undefined') {
     </header>
     <section class="wrapper style5">
       <div class="inner">
-        <!-- Mensajes de estado -->
+        
         <div v-if="errorMessage" class="box" style="background-color: #fff5f5; border-left: 4px solid #e53e3e;">
           <p style="color: #c53030; margin: 0;">{{ errorMessage }}</p>
         </div>
@@ -338,7 +415,7 @@ if (typeof window !== 'undefined') {
                   </div>
                 </div>
                 
-                <!-- Botones -->
+                <!-- Botones principales -->
                 <div class="col-12">
                   <ul class="actions" style="justify-content: center;">
                     <li>
@@ -348,7 +425,9 @@ if (typeof window !== 'undefined') {
                         id="submit-btn"
                         :disabled="isLoading"
                       >
-                        <span v-if="isLoading">Enviando...</span>
+                        <span v-if="isLoading">
+                          <span class="loading-spinner"></span> Enviando...
+                        </span>
                         <span v-else>ENVIAR SOLICITUD</span>
                       </button>
                     </li>
@@ -399,8 +478,25 @@ if (typeof window !== 'undefined') {
 </template>
 
 <style scoped>
+/* Estilos para el estado de carga */
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Animación de carga */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
 }
 </style>
