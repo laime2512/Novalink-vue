@@ -1,0 +1,17 @@
+start.bat
+*****************************************************
+@echo off
+echo Iniciando servidores...
+start "Backend" cmd /k "cd backend && npm run dev"
+timeout /t 3 /nobreak
+echo Iniciando frontend...
+start "Frontend" cmd /k "npm run dev"
+*****************************************************
+
+start.sh
+**********************************************
+#!/bin/bash
+echo "🚀 Iniciando servidores..."
+cd backend && npm run dev &
+cd .. && npm run dev &
+wait

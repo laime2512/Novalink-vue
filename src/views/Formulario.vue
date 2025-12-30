@@ -16,11 +16,11 @@ const errorMessage = ref('');
 const successMessage = ref('');
 
 // ⚠️ URL DIRECTA al backend Node.js
-const API_BASE = 'http://localhost:3001/api/';
+//const API_BASE = 'http://localhost:3001/api/';
 
 // --- FUNCIÓN PRINCIPAL PARA ENVIAR EL FORMULARIO ---
 const formNovalink = async () => {
-  console.log('📤 Enviando formulario...');
+  //console.log('📤 Enviando formulario...');
   
   // Resetear mensajes
   errorMessage.value = '';
@@ -44,8 +44,8 @@ const formNovalink = async () => {
 
   try {
     // PASO 1: Obtener token del backend
-    console.log('1. Obteniendo token...');
-    console.log('URL token:', `${API_BASE}auth/token`);
+    //console.log('1. Obteniendo token...');
+   // console.log('URL token:', `${API_BASE}auth/token`);
     
     const tokenResponse = await fetch(`${API_BASE}auth/token`, {
       method: 'GET',
@@ -58,7 +58,7 @@ const formNovalink = async () => {
     
     // Leer respuesta como texto primero
     const tokenText = await tokenResponse.text();
-    console.log('Respuesta token (texto):', tokenText);
+    //console.log('Respuesta token (texto):', tokenText);
     
     if (!tokenResponse.ok) {
       throw new Error(`Error obteniendo token: ${tokenResponse.status} - ${tokenText}`);
@@ -77,7 +77,7 @@ const formNovalink = async () => {
     }
     
     const API_TOKEN = tokenData.token;
-    console.log('✅ Token obtenido:', API_TOKEN);
+   // console.log('✅ Token obtenido:', API_TOKEN);
 
     // PASO 2: Preparar datos para la API
     const datosParaAPI = {
@@ -340,7 +340,7 @@ if (typeof window !== 'undefined') {
                     type="tel" 
                     name="telefono" 
                     id="telefono" 
-                    placeholder="+52 123 456 7890" 
+                    placeholder="+591 123456798" 
                     :disabled="isLoading"
                     required 
                   />
