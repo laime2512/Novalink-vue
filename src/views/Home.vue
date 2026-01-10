@@ -13,7 +13,7 @@
             <li>
               <router-link to="/formulario" class="button primary button">Click Aquí</router-link>
             </li>
-            <li><a href="https://wa.me/59174054547" class="button fit icon brands fa-whatsapp">74054547</a></li>
+            <li><a href="https://wa.me/59171800808" class="button fit icon brands fa-whatsapp">71800808</a></li>
           </ul>
         </div>
       </section>
@@ -135,7 +135,7 @@
             <li>
               <router-link to="/business" class="button fit primary">Business</router-link>
             </li>
-            <li><a href="https://wa.me/59174054547" class="button fit icon brands fa-whatsapp">74054547</a></li>
+            <li><a href="https://wa.me/59171800808" class="button fit icon brands fa-whatsapp">71800808</a></li>
           </ul>
         </div>
       </section>
