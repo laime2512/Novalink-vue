@@ -15,3 +15,78 @@ echo "🚀 Iniciando servidores..."
 cd backend && npm run dev &
 cd .. && npm run dev &
 wait
+----------version final---------
+sudo nano /etc/systemd/system/novalink.service
+
+
+---- Contenido del archivo de servicio-----
+[Unit]
+Description=Novalink Vue Application (Frontend + Backend)
+After=network.target
+Requires=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Cambia 'tu_usuario' por tu usuario real (ej: rlaime)
+User=tu_usuario
+Group=tu_usuario
+WorkingDirectory=/mnt/d/Users/Royeth/Desktop/saul/vfinal/novalink2
+
+# Script que inicia ambos servicios
+ExecStart=/bin/bash /mnt/d/Users/Royeth/Desktop/saul/vfinal/novalink2/novalink.sh
+Restart=on-failure
+RestartSec=10
+# Tiempo de espera para que el servicio se inicie
+TimeoutStartSec=30
+
+# Configuración de logs
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=novalink
+
+# Variables de entorno si las necesitas
+# Environment=NODE_ENV=production
+# Environment=PATH=/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target
+
+---------Configuración -----------
+
+    Reemplaza tu_usuario con tu usuario real (puedes verlo con whoami):
+
+bash
+
+whoami
+# Debería mostrar algo como 'rlaime' basado en tu prompt anterior
+
+    Asegúrate que el script novalink.sh sea ejecutable:
+
+bash
+
+chmod +x /mnt/d/Users/Royeth/Desktop/saul/vfinal/novalink2/novalink.sh
+
+    Recargar systemd:
+
+bash
+
+sudo systemctl daemon-reload
+
+    Habilitar el servicio (para inicio automático):
+
+bash
+
+sudo systemctl enable novalink.service
+
+    Iniciar el servicio:
+
+bash
+
+sudo systemctl start novalink.service
+
+    Verificar estado:
+
+bash
+
+sudo systemctl status novalink.service
