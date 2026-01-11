@@ -58,7 +58,7 @@
           </div>
         </section>
         <section class="spotlight">
-          <div class="image"><img src="@/images/pic03.jpg" alt="" /></div>
+          <div class="image"><img src="@/images/pic06.jpg" alt="" /></div>
           <div class="content">
             <h3>Georreferenciación y Mapas de Calor</h3>
             <blockquote>Visualización en Vivo: Ubicación en tiempo real de distribuidores, clientes y pedidos activos (integración con Google Maps).<br>
@@ -68,7 +68,7 @@
           </div>
         </section>
         <section class="spotlight">
-          <div class="image"><img src="@/images/pic02.jpg" alt="" /></div>
+          <div class="image"><img src="@/images/pic03.jpg" alt="" /></div>
           <div class="content">
             <h3>Gestión de Inventarios</h3>
             <blockquote>Sincronización de Almacenes: Control de stock en tiempo real con alertas de inventario mínimo.<br>
@@ -102,6 +102,11 @@
               <h3>Control de Calidad:</h3>
               <p>Registro de incidencias (si no se puede entregar) y validación de productos entregados.</p>
             </li>
+            <li class="icon solid fa-route">
+              <h3>Gestión de Ventas x día/turnos</h3>
+              <p>Gestiona y controla las ventas sobre la asignación diaria y de turnos  </p>
+            </li>
+
           </ul>
           <h3>App para Distribuidores (Logística y Preventa)</h3>
           <ul class="features">

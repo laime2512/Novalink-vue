@@ -16,7 +16,7 @@ const errorMessage = ref('');
 const successMessage = ref('');
 
 // ⚠️ URL DIRECTA al backend Node.js
-//const API_BASE = 'http://localhost:3001/api/';
+const API_BASE = 'http://localhost:3001/api/';
 
 // --- FUNCIÓN PRINCIPAL PARA ENVIAR EL FORMULARIO ---
 const formNovalink = async () => {
@@ -45,7 +45,7 @@ const formNovalink = async () => {
   try {
     // PASO 1: Obtener token del backend
     //console.log('1. Obteniendo token...');
-   // console.log('URL token:', `${API_BASE}auth/token`);
+    console.log('URL token:', `${API_BASE}auth/token`);
     
     const tokenResponse = await fetch(`${API_BASE}auth/token`, {
       method: 'GET',
@@ -340,9 +340,9 @@ if (typeof window !== 'undefined') {
                     type="tel" 
                     name="telefono" 
                     id="telefono" 
-                    placeholder="+591 123456798" 
+              
                     :disabled="isLoading"
-                    required 
+                     
                   />
                 </div>
                 
